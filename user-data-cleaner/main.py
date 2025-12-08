@@ -149,55 +149,36 @@ def clean_user(raw: dict[str, str]) -> dict[str, object]:
 
     return {"username": username ,"age": cleaned_age, "score": cleaned_score, "active": cleaned_active}
 
+    
+def is_valid(user: dict[str, object]) -> bool:
+    return user["age"] is not None and user["score"] is not None
+
+
+def is_active(user: dict[str, object]) -> bool:
+    return user["active"] is True
+
 
 cleaned_users = [u for u in (clean_user(user) for user in raw_users) if u]
-valid_users = [user for user in cleaned_users if user.get("age") and user.get("score")]
-active_users = [user for user in cleaned_users if user.get("active")]
+valid_users = [u for u in cleaned_users if is_valid(u)]
+active_users = [u for u in cleaned_users if is_active(u)]
+valid_active_users = [u for u in cleaned_users if is_valid(u) and is_active(u)]
 
-def average_age(users: list[dict[str, object]]) -> float | None:
-    ages = [float(user.get("age")) for user in users if user.get("age") is not None]
-    if not ages:
+
+def average(values: list[float]) -> float | None:
+    if not values:
         return None
-    return round(sum(ages) / len(ages), 2)
+    return sum(values) / len(values)
 
-def average_score(users: list[dict[str, object]]) -> Optional[float]:
-    scores = [float(user.get("score")) for user in users if user.get("score") is not None]
-    if not scores:
-        return None
-    return round(sum(scores) / len(scores), 2)
-
-def max_active_score(users: list[dict[str, object]]) -> float | None:
-    scores = [user.get("score") for user in users if user.get("score") is not None]
-
-    # for learning purposes, do not use max()
-    current_score = scores[0]
-
-    for score in scores:
-        if score > current_score:
-            current_score = score
-    
-    return current_score
-
-def min_active_score(users: list[dict[str, object]]) -> float | None:
-    scores = [user.get("score") for user in users if user.get("score") is not None]
-
-    # for learning purposes, do not use min()
-    current_score = scores[0]
-
-    for score in scores:
-        if score < current_score:
-            current_score = score
-    
-    return current_score
 
 report = {
     "total_users": len(cleaned_users),
     "valid_users": len(valid_users),
     "active_users": len(active_users),
-    "average_age": average_age(cleaned_users),
-    "average_score": average_score(cleaned_users),
-    "max_active_score": max_active_score(active_users),
-    "min_active_score": min_active_score(active_users)
+    "average_age": average([u["age"] for u in valid_users]),
+    "average_score": average([u["score"] for u in valid_users]),
+    "max_score_active": max([u["score"] for u in active_users if u["score"] is not None], default=None),
+    "min_score_active": min([u["score"] for u in active_users if u["score"] is not None], default=None)
 }
+
 
 print(report)
